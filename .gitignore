@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Gradle / Kotlin
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+iosApp/Pods/
