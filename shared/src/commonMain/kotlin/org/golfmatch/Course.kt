@@ -38,6 +38,8 @@ data class Course(
     val loops: List<Loop>,
     /** Valeurs du 18 trous complet (layout EIGHTEEN). */
     val rating18: Rating = Rating(),
+    /** Parcours retiré de la liste mais conservé pour l'historique des parties. */
+    val archived: Boolean = false,
 ) {
     fun loop(id: String): Loop = loops.first { it.id == id }
 

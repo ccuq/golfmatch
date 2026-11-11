@@ -1,0 +1,195 @@
+-- Joueurs ------------------------------------------------------------------
+
+CREATE TABLE player (
+    id TEXT NOT NULL PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    hcp_index REAL,
+    color TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    archived INTEGER NOT NULL DEFAULT 0
+);
+
+allPlayers:
+SELECT * FROM player ORDER BY code;
+
+upsertPlayer:
+INSERT OR REPLACE INTO player(id, first_name, last_name, code, hcp_index, color, email, phone, archived)
+VALUES ?;
+
+archivePlayer:
+UPDATE player SET archived = 1 WHERE id = ?;
+
+deletePlayer:
+DELETE FROM player WHERE id = ?;
+
+-- Parcours -----------------------------------------------------------------
+
+CREATE TABLE course (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    layout TEXT NOT NULL,
+    slope18 INTEGER,
+    sss18 REAL,
+    archived INTEGER NOT NULL DEFAULT 0
+);
+
+-- Boucle de 9 trous ; position = ordre dans le parcours (0, 1).
+CREATE TABLE course_loop (
+    id TEXT NOT NULL,
+    course_id TEXT NOT NULL REFERENCES course(id),
+    position INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    slope INTEGER,
+    sss REAL,
+    PRIMARY KEY (course_id, id)
+);
+
+CREATE TABLE hole (
+    course_id TEXT NOT NULL,
+    loop_id TEXT NOT NULL,
+    number INTEGER NOT NULL,
+    par INTEGER NOT NULL,
+    stroke_index INTEGER NOT NULL,
+    PRIMARY KEY (course_id, loop_id, number)
+);
+
+allCourses:
+SELECT * FROM course ORDER BY name, id;
+
+allLoops:
+SELECT * FROM course_loop ORDER BY course_id, position;
+
+allHoles:
+SELECT * FROM hole ORDER BY course_id, loop_id, number;
+
+upsertCourse:
+INSERT OR REPLACE INTO course(id, name, layout, slope18, sss18, archived) VALUES ?;
+
+insertLoop:
+INSERT INTO course_loop(id, course_id, position, name, slope, sss) VALUES ?;
+
+insertHole:
+INSERT INTO hole(course_id, loop_id, number, par, stroke_index) VALUES ?;
+
+deleteCourseHoles:
+DELETE FROM hole WHERE course_id = ?;
+
+deleteCourseLoops:
+DELETE FROM course_loop WHERE course_id = ?;
+
+archiveCourse:
+UPDATE course SET archived = 1 WHERE id = ?;
+
+deleteCourse:
+DELETE FROM course WHERE id = ?;
+
+-- Parties ------------------------------------------------------------------
+
+CREATE TABLE game (
+    id TEXT NOT NULL PRIMARY KEY,
+    created_at INTEGER NOT NULL,
+    course_id TEXT NOT NULL,
+    course_name TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    pair_format TEXT
+);
+
+-- Trous de la partie, figés à sa création, dans l'ordre de jeu.
+CREATE TABLE game_hole (
+    game_id TEXT NOT NULL REFERENCES game(id),
+    hole_order INTEGER NOT NULL,
+    tour INTEGER NOT NULL,
+    loop_id TEXT NOT NULL,
+    loop_name TEXT NOT NULL,
+    number INTEGER NOT NULL,
+    par INTEGER NOT NULL,
+    stroke_index INTEGER NOT NULL,
+    PRIMARY KEY (game_id, hole_order)
+);
+
+-- Joueurs de chaque camp.
+CREATE TABLE game_side (
+    game_id TEXT NOT NULL REFERENCES game(id),
+    side_index INTEGER NOT NULL,
+    position INTEGER NOT NULL,
+    player_id TEXT NOT NULL,
+    PRIMARY KEY (game_id, side_index, position)
+);
+
+-- Coups par balle et par trou (une ligne par score saisi).
+CREATE TABLE score (
+    game_id TEXT NOT NULL REFERENCES game(id),
+    ball_index INTEGER NOT NULL,
+    hole_order INTEGER NOT NULL,
+    strokes INTEGER NOT NULL,
+    PRIMARY KEY (game_id, ball_index, hole_order)
+);
+
+CREATE INDEX game_side_player ON game_side(player_id);
+CREATE INDEX game_course ON game(course_id);
+
+allGames:
+SELECT * FROM game ORDER BY created_at DESC;
+
+allGameHoles:
+SELECT * FROM game_hole ORDER BY game_id, hole_order;
+
+allGameSides:
+SELECT * FROM game_side ORDER BY game_id, side_index, position;
+
+allScores:
+SELECT * FROM score;
+
+insertGame:
+INSERT INTO game(id, created_at, course_id, course_name, mode, pair_format) VALUES ?;
+
+insertGameHole:
+INSERT INTO game_hole(game_id, hole_order, tour, loop_id, loop_name, number, par, stroke_index) VALUES ?;
+
+insertGameSide:
+INSERT INTO game_side(game_id, side_index, position, player_id) VALUES ?;
+
+upsertScore:
+INSERT OR REPLACE INTO score(game_id, ball_index, hole_order, strokes) VALUES (?, ?, ?, ?);
+
+deleteScore:
+DELETE FROM score WHERE game_id = ? AND ball_index = ? AND hole_order = ?;
+
+playerIsUsed:
+SELECT count(*) FROM game_side WHERE player_id = ?;
+
+courseIsUsed:
+SELECT count(*) FROM game WHERE course_id = ?;
+
+deleteGameScores:
+DELETE FROM score WHERE game_id = ?;
+
+deleteGameSides:
+DELETE FROM game_side WHERE game_id = ?;
+
+deleteGameHoles:
+DELETE FROM game_hole WHERE game_id = ?;
+
+deleteGame:
+DELETE FROM game WHERE id = ?;
+
+-- Remise à zéro avant import.
+clearScores:
+DELETE FROM score;
+clearGameSides:
+DELETE FROM game_side;
+clearGameHoles:
+DELETE FROM game_hole;
+clearGames:
+DELETE FROM game;
+clearHoles:
+DELETE FROM hole;
+clearLoops:
+DELETE FROM course_loop;
+clearCourses:
+DELETE FROM course;
+clearPlayers:
+DELETE FROM player;

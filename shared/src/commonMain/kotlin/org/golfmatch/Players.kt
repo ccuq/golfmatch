@@ -12,6 +12,8 @@ data class Player(
     val colorHex: String = "#2E7D32",
     val email: String? = null,
     val phone: String? = null,
+    /** Joueur retiré de la liste mais conservé pour l'historique des parties. */
+    val archived: Boolean = false,
 )
 
 /**

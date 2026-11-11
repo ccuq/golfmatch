@@ -15,7 +15,7 @@ Kotlin Multiplatform : la logique métier (calcul du match play, classements, co
 
 ## Structure
 
-- `shared/` : logique partagée en Kotlin (codes joueurs, parcours et ordre des trous, match play, stroke play), avec ses tests.
+- `shared/` : logique partagée en Kotlin (codes joueurs, parcours et ordre des trous, match play, stroke play) et stockage dans une base SQLite (SQLDelight), avec ses tests. Le schéma est dans `shared/src/commonMain/sqldelight/`.
 - `iosApp/` (à venir) : écrans SwiftUI.
 - `androidApp/` (à venir) : écrans Jetpack Compose.
 
@@ -27,7 +27,7 @@ Lancer les tests de la logique partagée :
 
 ## État
 
-Cahier des charges V1 validé, logique partagée en place et testée. Écrans iPhone à venir.
+Cahier des charges V1 validé, logique partagée et stockage SQLite en place et testés. Sauvegarde exportable en JSON. Écrans iPhone à venir.
 
 ## Licence
 
